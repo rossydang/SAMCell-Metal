@@ -5,3 +5,4 @@ checkpoints
 datasets
 src/wandb
 dataset_processing/CellPose
+myenv
