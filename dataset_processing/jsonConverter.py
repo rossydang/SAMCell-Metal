@@ -14,6 +14,7 @@ os.makedirs(output_folder, exist_ok=True)
 
 # Loop over all .npy files in the input folder
 for npy_file in os.listdir(input_folder_npy):
+    print(f"Processing {npy_file}")
     if npy_file.endswith('.npy'):
         # Extract the base name without extension
         base_name = os.path.splitext(npy_file)[0]
@@ -47,9 +48,10 @@ for npy_file in os.listdir(input_folder_npy):
                 binary_mask = cv2.cvtColor(binary_mask, cv2.COLOR_BGR2GRAY)
 
             # Find contours for the current label
-            contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            print(f"Found {len(contours)} contours for label {label}")
 
-            paths = []
+            paths_and_boxes = []
             x_min, y_min, x_max, y_max = width, height, 0, 0
 
             for cnt in contours:
@@ -64,34 +66,42 @@ for npy_file in os.listdir(input_folder_npy):
                 x_max = max(x_max, x + w)
                 y_max = max(y_max, y + h)
 
-                # Convert contour to a list of points
-                path = [{'x': float(point[0]), 'y': float(point[1])} for point in cnt]
-                paths.append(path)
+                bounding_box = {
+                    'h': float(y_max - y_min),
+                    'w': float(x_max - x_min),
+                    'x': float(x_min),
+                    'y': float(y_min)
+                }
 
-            if not paths:
+                # Convert contour to a list of points
+                path_and_box = (bounding_box, [{'x': float(point[0]), 'y': float(point[1])} for point in cnt])
+                paths_and_boxes.append(path_and_box)
+
+            if not paths_and_boxes:
                 continue  # Skip if no valid contours found
 
-            # Define the bounding box
-            bounding_box = {
-                'h': float(y_max - y_min),
-                'w': float(x_max - x_min),
-                'x': float(x_min),
-                'y': float(y_min)
-            }
+            # # Define the bounding box
+            # bounding_box = {
+            #     'h': float(y_max - y_min),
+            #     'w': float(x_max - x_min),
+            #     'x': float(x_min),
+            #     'y': float(y_min)
+            # }
 
-            # Create the annotation
-            annotation = {
-                'bounding_box': bounding_box,
-                'id': str(uuid.uuid4()),
-                'name': 'grain',
-                'polygon': {
-                    'paths': paths
-                },
-                'slot_names': ["0"],
-                'properties': []
-            }
+            for path_and_box in paths_and_boxes:
+                # Create the annotation
+                annotation = {
+                    'bounding_box': path_and_box[0],
+                    'id': str(uuid.uuid4()),
+                    'name': 'grain',
+                    'polygon': {
+                        'paths': path_and_box[1]
+                    },
+                    'slot_names': ["0"],
+                    'properties': []
+                }
 
-            annotations.append(annotation)
+                annotations.append(annotation)
 
         # Build the final JSON structure
         json_data = {

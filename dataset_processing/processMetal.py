@@ -6,9 +6,9 @@ from tqdm import tqdm
 
 # Path to the folder containing the images and where to save .npy files, change as
 data_folder = 'data'
-new_data_npy = 'data_formatted/images_resized_npy'
-new_data_jpg = 'data_formatted/images_resized_jpg'
-new_data_npy_arr = 'data_formatted/images_resized_npy_arr'
+new_data_npy = 'data_formatted_temp/images_resized_npy'
+new_data_jpg = 'data_formatted_temp/images_resized_jpg'
+new_data_npy_arr = 'data_formatted_temp/images_resized_npy_arr'
 
 # Create the new folder if it doesn't exist
 if not os.path.exists(new_data_npy):
